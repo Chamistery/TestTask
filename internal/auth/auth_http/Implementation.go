@@ -1,4 +1,4 @@
-package auth_grpc
+package auth_http
 
 import (
 	config2 "github.com/Chamistery/TestTask/internal/auth/config"
