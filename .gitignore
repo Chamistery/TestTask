@@ -2,4 +2,5 @@
 bin
 *.env
 /logs
+/.idea
 /coverage.out
