@@ -3,10 +3,11 @@ package app
 import (
 	"context"
 	"flag"
+	"github.com/Chamistery/TestTask/internal/auth/auth_http"
+	"github.com/natefinch/lumberjack"
 
 	"github.com/Chamistery/TestTask/internal/auth/client/db"
 	"github.com/Chamistery/TestTask/internal/auth/client/db/pg"
-	"github.com/Chamistery/TestTask/internal/auth/client/db/transaction"
 	"github.com/Chamistery/TestTask/internal/auth/closer"
 	config2 "github.com/Chamistery/TestTask/internal/auth/config"
 	"github.com/Chamistery/TestTask/internal/auth/logger"
@@ -84,14 +85,6 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
-func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
-	if s.txManager == nil {
-		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
-	}
-
-	return s.txManager
-}
-
 func (s *serviceProvider) AuthRepository(ctx context.Context) repository.AuthRepository {
 	if s.authRepository == nil {
 		s.authRepository = authRepository.NewRepository(s.DBClient(ctx))
@@ -104,7 +97,6 @@ func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	if s.authService == nil {
 		s.authService = authService.NewService(
 			s.AuthRepository(ctx),
-			s.TxManager(ctx),
 		)
 	}
 

@@ -1,7 +1,7 @@
 package auth_http
 
 import (
-	config2 "github.com/Chamistery/TestTask/internal/auth/config"
+	config "github.com/Chamistery/TestTask/internal/auth/config"
 	"github.com/Chamistery/TestTask/internal/auth/logger"
 	"github.com/Chamistery/TestTask/internal/auth/service"
 	"go.uber.org/zap"
@@ -9,12 +9,11 @@ import (
 
 type Implementation struct {
 	authService service.AuthService
-
-	tokenConfig config2.TokenConfig
+	tokenConfig config.TokenConfig
 }
 
 func NewImplementation(authService service.AuthService) *Implementation {
-	token, err := config2.NewTokenConfig()
+	token, err := config.NewTokenConfig()
 	if err != nil {
 		logger.Error("No config for auth and access", zap.Error(err))
 	}

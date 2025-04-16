@@ -13,10 +13,8 @@ type serv struct {
 
 func NewService(
 	authRepository repository.AuthRepository,
-	txManager db.TxManager,
 ) service.AuthService {
 	return &serv{
 		authRepository: authRepository,
-		txManager:      txManager,
 	}
 }

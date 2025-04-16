@@ -29,6 +29,7 @@ type tokenConfig struct {
 }
 
 func NewTokenConfig() (TokenConfig, error) {
+	CreateSecrets()
 	refreshK := os.Getenv(refreshKey)
 	accessK := os.Getenv(accessKey)
 	accT, err1 := strconv.Atoi(os.Getenv(accessDur))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Chamistery/TestTask/internal/auth/client/db"
 	"github.com/Chamistery/TestTask/internal/auth/client/db/format_date"
+	"github.com/jackc/pgx/v4"
 	"log"
 
 	"github.com/georgysavva/scany/pgxscan"

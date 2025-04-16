@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/Chamistery/TestTask/internal/auth/client/db"
+	"github.com/Chamistery/TestTask/internal/auth/model"
 	"github.com/Chamistery/TestTask/internal/auth/repository"
+	"github.com/Chamistery/TestTask/internal/auth/utils"
 	sq "github.com/Masterminds/squirrel"
 )
 
 const (
 	tableName = "auth"
 
+	uuidColumn    = "uuid"
 	refreshColumn = "refresh_token"
 	guidColumn    = "guid"
 )
@@ -23,11 +26,11 @@ func NewRepository(db db.Client) repository.AuthRepository {
 	return &repo{db: db}
 }
 
-func (r *repo) Create(ctx context.Context, refr RefreshModel) (string, error) {
+func (r *repo) Create(ctx context.Context, create model.CreateModel) (string, error) {
 	builder := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(guid, refreshColumn).
-		Values(refr.Guid, refr.RefreshToken).
+		Columns(uuidColumn, guidColumn, refreshColumn).
+		Values(create.Uuid, create.Guid, create.RefreshToken).
 		Suffix("RETURNING refresh_token")
 
 	query, args, err := builder.ToSql()
@@ -49,27 +52,54 @@ func (r *repo) Create(ctx context.Context, refr RefreshModel) (string, error) {
 	return refresh_token, nil
 }
 
-func (r *repo) Refresh(ctx context.Context, create CreateModel) (string, error) {
-	builder := sq.Update(tableName).
+func (r *repo) Refresh(ctx context.Context, refr model.RefreshModel) (string, error) {
+	selectBuilder := sq.
+		Select(refreshColumn).
+		From(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Set(refreshColumn, create.RefreshTokenNew).
-		Where(sq.Eq{refreshColumn: create.RefreshTokenOld}).
-		Suffix("RETURNING guid")
+		Where(sq.Eq{uuidColumn: refr.Uuid})
 
-	query, args, err := builder.ToSql()
+	selectQuery, selectArgs, err := selectBuilder.ToSql()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to build select query: %w", err)
 	}
 
-	q := db.Query{
-		Name:     "auth_repository.Refresh",
-		QueryRaw: query,
+	selectQ := db.Query{
+		Name:     "auth_repository.Select",
+		QueryRaw: selectQuery,
+	}
+
+	var storedHashedToken string
+	err = r.db.DB().QueryRowContext(ctx, selectQ, selectArgs...).Scan(&storedHashedToken)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch token record: %w", err)
+	}
+
+	if !utils.VerifyHashedToken(storedHashedToken, refr.RefreshTokenOld) {
+		return "", fmt.Errorf("Token is wrong")
+	}
+
+	updateBuilder := sq.
+		Update(tableName).
+		PlaceholderFormat(sq.Dollar).
+		Set(refreshColumn, refr.RefreshTokenNew).
+		Where(sq.Eq{uuidColumn: refr.Uuid}).
+		Suffix("RETURNING " + guidColumn)
+
+	updateQuery, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return "", fmt.Errorf("failed to build update query: %w", err)
+	}
+
+	updateQ := db.Query{
+		Name:     "auth_repository.UpdateRefreshToken",
+		QueryRaw: updateQuery,
 	}
 
 	var guid string
-	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&guid)
+	err = r.db.DB().QueryRowContext(ctx, updateQ, updateArgs...).Scan(&guid)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to update token: %w", err)
 	}
 
 	return guid, nil

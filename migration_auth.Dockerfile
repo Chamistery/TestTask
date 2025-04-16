@@ -9,7 +9,7 @@ ADD https://github.com/pressly/goose/releases/download/v3.14.0/goose_linux_x86_6
 RUN chmod +x /bin/goose
 
 WORKDIR /root
-
+ 
 ADD migrations/auth/*.sql migrations/auth/
 ADD migration_auth.sh .
 ADD .env .

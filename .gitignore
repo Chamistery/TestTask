@@ -1,0 +1,5 @@
+**/mocks/
+bin
+*.env
+/logs
+/coverage.out

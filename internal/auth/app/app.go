@@ -3,16 +3,18 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"github.com/Chamistery/TestTask/internal/auth/auth_http"
 	"github.com/Chamistery/TestTask/internal/auth/closer"
 	"github.com/Chamistery/TestTask/internal/auth/config"
 	"github.com/Chamistery/TestTask/internal/auth/model"
+	"github.com/rs/cors"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 
-	"github.com/Chamistery/TestTask/inconfig.goternal/auth/logger"
+	"github.com/Chamistery/TestTask/internal/auth/logger"
 )
 
 type App struct {
@@ -38,7 +40,7 @@ func (a *App) Run() error {
 	}()
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
@@ -126,7 +128,7 @@ func getClientIP(r *http.Request) string {
 	return ip
 }
 
-func (a *App) handleCreate(w http.ResponseWriter, r *http.Request, handler *model.Implementation) {
+func (a *App) handleCreate(w http.ResponseWriter, r *http.Request, handler *auth_http.Implementation) {
 	if r.Method == http.MethodPost {
 		ip := getClientIP(r)
 		var req model.CreateRequest
@@ -149,7 +151,7 @@ func (a *App) handleCreate(w http.ResponseWriter, r *http.Request, handler *mode
 	}
 }
 
-func (a *App) handleRefresh(w http.ResponseWriter, r *http.Request, handler *model.Implementation) {
+func (a *App) handleRefresh(w http.ResponseWriter, r *http.Request, handler *auth_http.Implementation) {
 	if r.Method == http.MethodPatch {
 		ip := getClientIP(r)
 		var req model.RefreshRequest
@@ -174,10 +176,22 @@ func (a *App) handleRefresh(w http.ResponseWriter, r *http.Request, handler *mod
 
 func (a *App) runHTTPServer() error {
 	log.Printf("HTTP server is running on %s", a.httpServer.Addr)
-	logger.Init(getCore(getAtomicLevel()))
 	err := a.httpServer.ListenAndServe()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *serviceProvider) HTTPConfig() config.HTTPConfig {
+	if s.httpConfig == nil {
+		cfg, err := config.NewHTTPAuthConfig()
+		if err != nil {
+			log.Fatalf("failed to get http config: %s", err.Error())
+		}
+
+		s.httpConfig = cfg
+	}
+
+	return s.httpConfig
 }

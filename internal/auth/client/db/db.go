@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
+
 	"github.com/jackc/pgconn"
 )
 
@@ -19,6 +21,10 @@ type TxManager interface {
 type Query struct {
 	Name     string
 	QueryRaw string
+}
+
+type Transactor interface {
+	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }
 
 type SQLExecer interface {
@@ -41,9 +47,9 @@ type Pinger interface {
 	Ping(ctx context.Context) error
 }
 
-// DB интерфейс для работы с БД
 type DB interface {
 	SQLExecer
+	Transactor
 	Pinger
 	Close()
 }

@@ -1,15 +1,16 @@
 services:
   pg-auth:
     image: postgres:14-alpine3.17
-    container_name: auth_db
+    container_name: ${CONTAINER_NAME}
     environment:
-      POSTGRES_DB: auth
-      POSTGRES_USER: auth-user
-      POSTGRES_PASSWORD: auth-password
+      POSTGRES_DB: ${POSTGRES_AUTH_DB}
+      POSTGRES_USER: ${POSTGRES_AUTH_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_AUTH_PASSWORD}
     ports:
-      - "54323:5432"
+      - "${PORT_FROM}:${PORT_TO}"
     volumes:
       - postgres_volume3:/var/lib/postgresql/data
+
   migrator:
     build:
       context: .
@@ -17,3 +18,6 @@ services:
     restart: on-failure
     environment:
       DB_HOST: pg-auth
+
+volumes:
+  postgres_volume3:

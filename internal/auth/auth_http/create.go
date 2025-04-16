@@ -4,27 +4,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Chamistery/TestTask/internal/auth/logger"
 	"github.com/Chamistery/TestTask/internal/auth/model"
 	"github.com/Chamistery/TestTask/internal/auth/utils"
-	"github.com/Chamistery/TestTask/internal/logger"
+	"github.com/google/uuid"
 )
 
 func (i *Implementation) Create(ctx context.Context, req *model.CreateRequest, ip string) (*model.Response, error) {
-	accessToken, err := utils.GenerateToken(ip,
+	uuid := uuid.New().String()
+	accessToken, err := utils.GenerateToken(uuid, ip,
 		[]byte(i.tokenConfig.GetAccess()),
 		i.tokenConfig.GetAccessTime(),
 	)
-	refreshToken, err := utils.GenerateToken(ip,
+	refreshToken, err := utils.GenerateToken(uuid, ip,
 		[]byte(i.tokenConfig.GetRefr()),
 		i.tokenConfig.GetRefreshTime(),
 	)
 	if err != nil {
 		return nil, errors.New("failed to generate token")
 	}
-	create, err := i.authService.Create(ctx, refreshToken)
+	token, _ := utils.HashToken(refreshToken)
+	create, err := i.authService.Create(ctx, model.CreateModel{uuid, token, req.Guid})
 	if err != nil {
-		nil, err
+		return nil, err
 	}
-	logger.Info(fmt.Sprintf("Access and refresh %s tokens created", create))
-	return &Response{access_token: accessToken, refresh_token: refreshToken}, nil
+	logger.Info(fmt.Sprintf("Access and refresh (%s) tokens created", create))
+	return &model.Response{accessToken, refreshToken}, nil
 }

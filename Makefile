@@ -12,33 +12,25 @@ run:
 	wait
 install-deps:
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.20.0
+	GOBIN=$(LOCAL_BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@v3
 
-local-migration-status:
-	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${PG_DSN} status -v
-
-local-migration-hotel-up:
-	$(LOCAL_BIN)/goose -dir ${MIGRATION_HOTEL_DIR} postgres ${PG_HOTEL_DSN} up -v
-
-local-migration-booking-up:
-	$(LOCAL_BIN)/goose -dir ${MIGRATION_BOOKING_DIR} postgres ${PG_BOOKING_DSN} up -v
-
-local-migration-booking-down:
-	$(LOCAL_BIN)/goose -dir ${MIGRATION_BOOKING_DIR} postgres ${PG_BOOKING_DSN} down -v
+local-migration-auth-status:
+	$(LOCAL_BIN)/goose -dir ${MIGRATION_AUTH_DIR} postgres ${PG_AUTH_DSN} status -v
 
 local-migration-auth-up:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_AUTH_DIR} postgres ${PG_AUTH_DSN} up -v
+
 local-migration-auth-down:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_AUTH_DIR} postgres ${PG_AUTH_DSN} down -v
 
-local-migration-hotel-down:
-	$(LOCAL_BIN)/goose -dir ${MIGRATION_HOTEL_DIR} postgres ${PG_HOTEL_DSN} down -v
+generate-test:
+	go generate ./...
 
-local-migration-up:
-	local-migration-hotel-up
-	local-migration-booking-up
-	local-migration-auth-up
-
-local-migration-down:
-	local-migration-hotel-down
-	local-migration-booking-down
-	local-migration-auth-down
+test-coverage:
+	go clean -testcache
+	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/Chamistery/TestTask/internal/auth/auth_http/... -count 5
+	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out
+	rm coverage.tmp.out
+	go tool cover -html=coverage.out;
+	go tool cover -func=./coverage.out | grep "total";
+	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
