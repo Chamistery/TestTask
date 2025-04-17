@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Chamistery/TestTask/internal/auth/closer"
 	"github.com/Chamistery/TestTask/internal/auth/service/mocks"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ func getCore(level zap.AtomicLevel) zapcore.Core {
 		panic(err)
 	}
 	file := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   filepath.Join(path, "logs/app.log"),
+		Filename:   filepath.Join(path, "logs/app_test.log"),
 		MaxSize:    10, // megabytes
 		MaxBackups: 3,
 		MaxAge:     7, // days
@@ -62,6 +63,10 @@ func getAtomicLevel() zap.AtomicLevel {
 }
 
 func initConfig(_ context.Context) error {
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
 	envFilePath, err := config.GetEnvFilePath()
 	if err != nil {
 		return fmt.Errorf("ошибка получения пути к .env: %v", err)

@@ -31,6 +31,6 @@ test-coverage:
 	go test ./... -coverprofile=coverage.tmp.out -covermode count -coverpkg=github.com/Chamistery/TestTask/internal/auth/auth_http/... -count 5
 	grep -v 'mocks\|config' coverage.tmp.out  > coverage.out
 	rm coverage.tmp.out
-	go tool cover -html=coverage.out;
+	go tool cover -html=coverage.out -o coverage.html;
 	go tool cover -func=./coverage.out | grep "total";
 	grep -sqFx "/coverage.out" .gitignore || echo "/coverage.out" >> .gitignore
