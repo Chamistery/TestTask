@@ -72,21 +72,12 @@ func writeToEnv(key, value, envFilePath string) error {
 		return fmt.Errorf("ошибка чтения .env: %v", err)
 	}
 
-	content := string(data)
-	lines := strings.Split(content, "\n")
-	keyExists := false
-
+	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(strings.TrimSpace(line), key+"=") {
-			keyExists = true
 			fmt.Printf("Ключ %s уже существует в .env\n", key)
 			return nil
 		}
-	}
-
-	newLine := fmt.Sprintf("%s=%s", key, value)
-	if keyExists {
-		return nil
 	}
 
 	f, err := os.OpenFile(envFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -95,8 +86,13 @@ func writeToEnv(key, value, envFilePath string) error {
 	}
 	defer f.Close()
 
+	newLine := fmt.Sprintf("%s=%s", key, value)
 	if _, err := f.WriteString(newLine + "\n"); err != nil {
 		return fmt.Errorf("ошибка записи в .env: %v", err)
+	}
+
+	if err := os.Setenv(key, value); err != nil {
+		return fmt.Errorf("ошибка установки переменной окружения: %v", err)
 	}
 
 	return nil
