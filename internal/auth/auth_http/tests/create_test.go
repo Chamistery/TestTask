@@ -63,10 +63,6 @@ func getAtomicLevel() zap.AtomicLevel {
 }
 
 func initConfig(_ context.Context) error {
-	defer func() {
-		closer.CloseAll()
-		closer.Wait()
-	}()
 	envFilePath, err := config.GetEnvFilePath()
 	if err != nil {
 		return fmt.Errorf("ошибка получения пути к .env: %v", err)
@@ -82,6 +78,10 @@ func initConfig(_ context.Context) error {
 
 func TestCreate(t *testing.T) {
 	initConfig(context.Background())
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
 	logger.Init(getCore(getAtomicLevel()))
 	mc := minimock.NewController(t)
 	defer mc.Finish()
