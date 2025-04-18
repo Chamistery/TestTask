@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/Chamistery/TestTask/internal/auth/auth_http"
-	"github.com/Chamistery/TestTask/internal/auth/logger"
 	"github.com/Chamistery/TestTask/internal/auth/model"
 	"github.com/Chamistery/TestTask/internal/auth/service/mocks"
 	"github.com/gojuno/minimock/v3"
@@ -15,9 +14,6 @@ import (
 )
 
 func TestRefresh(t *testing.T) {
-	initConfig(context.Background())
-	logger.Init(getCore(getAtomicLevel()))
-
 	ctx := context.Background()
 
 	mc := minimock.NewController(t)

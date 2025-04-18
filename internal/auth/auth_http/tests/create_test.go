@@ -76,13 +76,21 @@ func initConfig(_ context.Context) error {
 	return nil
 }
 
-func TestCreate(t *testing.T) {
-	initConfig(context.Background())
-	defer func() {
-		closer.CloseAll()
-		closer.Wait()
-	}()
+func TestMain(m *testing.M) {
+	if err := initConfig(context.Background()); err != nil {
+		panic(err)
+	}
 	logger.Init(getCore(getAtomicLevel()))
+
+	code := m.Run()
+
+	closer.CloseAll()
+	closer.Wait()
+
+	os.Exit(code)
+}
+
+func TestCreate(t *testing.T) {
 	mc := minimock.NewController(t)
 	defer mc.Finish()
 
